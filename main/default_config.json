@@ -1,0 +1,89 @@
+{
+    "log": {
+        "loglevel": "info",
+        "access": "",
+        "error": ""
+    },
+    "inbounds": [
+        {
+            "port": 4009,
+            "protocol": "socks",
+            "settings": {
+                "udp": true
+            }
+        },
+        {
+            "port": 4008,
+            "protocol": "http"
+        },
+        {
+            "port": 12345,
+            "protocol": "dokodemo-door",
+            "settings": {
+                "network": "tcp,udp",
+                "followRedirect": true
+            },
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
+            },
+            "streamSettings": {
+                "sockopt": {
+                    "tproxy": "redirect"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "mux": {
+                "enabled": false
+            },
+            "protocol": "vmess",
+            "settings": {
+            },
+            "streamSettings": {
+            }
+        },
+        {
+            "mux": {
+                "enabled": false
+            },
+            "protocol": "freedom",
+            "streamSettings": {
+                "sockopt": {
+                    "mark": 255
+                }
+            },
+            "settings": {
+            },
+            "tag": "direct"
+        }
+    ],
+    "routing": {
+        "settings": {
+            "domainStrategy": "IPIfNonMatch",
+            "rules": [
+                {
+                    "domain": [
+                        "geosite:cn"
+                    ],
+                    "outboundTag": "direct",
+                    "type": "field"
+                },
+                {
+                    "ip": [
+                        "geoip:cn",
+                        "geoip:private"
+                    ],
+                    "outboundTag": "direct",
+                    "type": "field"
+                }
+            ]
+        },
+        "strategy": "rules"
+    }
+}
