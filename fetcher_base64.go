@@ -15,12 +15,12 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func v2rayConfigFromVmessURL(vmessURL string) (V2rayConfigMap, error) {
-	if !strings.HasPrefix(vmessURL, "vmess://") {
+func v2rayConfigFromVmessURL(url string) (V2rayConfigMap, error) {
+	if !strings.HasPrefix(url, "vmess://") {
 		return nil, errors.New("not vmess url")
 	}
 
-	vmessJSONBytes, err := base64.URLEncoding.DecodeString(vmessURL[8:])
+	vmessJSONBytes, err := base64.URLEncoding.DecodeString(url[8:])
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +55,31 @@ func v2rayConfigFromVmessURL(vmessURL string) (V2rayConfigMap, error) {
 		configMap["outbounds.0.streamSettings.wsSettings.path"] = gjson.Get(vmessJSON, "path").String()
 		configMap["outbounds.0.streamSettings.wsSettings.headers.Host"] = gjson.Get(vmessJSON, "host").String()
 	} else if net == "tcp" {
-		if gjson.Get(vmessJSON, "type").String() == "http" {
-			return nil, errors.New("unsupported tcp with http")
+		if typ := gjson.Get(vmessJSON, "type").String(); typ == "http" {
+			configMap["outbounds.0.streamSettings.tcpSettings.header.type"] = "http"
+			if hosts := strings.ReplaceAll(gjson.Get(vmessJSON, "host").String(), " ", ""); hosts != "" {
+				configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Host"] = strings.Split(hosts, ",")
+			}
+			if paths := strings.ReplaceAll(gjson.Get(vmessJSON, "path").String(), " ", ""); paths != "" {
+				configMap["outbounds.0.streamSettings.tcpSettings.header.request.path"] = strings.Split(paths, ",")
+			} else {
+				configMap["outbounds.0.streamSettings.tcpSettings.header.request.path"] = []string{"/"}
+			}
+
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.version"] = "1.1"
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.method"] = "GET"
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.User-Agent"] = []string{
+				"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
+				"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0",
+			}
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Accept"] = []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"}
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Accept-language"] = []string{"zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4"}
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Accept-Encoding"] = []string{"gzip, deflate, br"}
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Cache-Control"] = []string{"no-cache"}
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Connection"] = []string{"keep-alive"}
+			configMap["outbounds.0.streamSettings.tcpSettings.header.request.headers.Pragma"] = "no-cache"
+		} else if typ != "" {
+			return nil, errors.New("unsupported tcp with " + typ)
 		}
 	} else {
 		return nil, errors.New("unsupported net type " + net)
@@ -65,18 +88,18 @@ func v2rayConfigFromVmessURL(vmessURL string) (V2rayConfigMap, error) {
 	return configMap, nil
 }
 
-func v2rayConfigFromTrojanURL(trojanURL string) (V2rayConfigMap, error) {
-	if !strings.HasPrefix(trojanURL, "trojan://") {
-		return nil, errors.New(trojanURL + " not trojan url")
+func v2rayConfigFromTrojanURL(url string) (V2rayConfigMap, error) {
+	if !strings.HasPrefix(url, "trojan://") {
+		return nil, errors.New("not trojan url")
 	}
 
-	url := strings.Split(strings.Split(trojanURL[9:], "#")[0], "@")
+	urls := strings.Split(strings.Split(url[9:], "#")[0], "@")
 	if len(url) != 2 {
-		return nil, errors.New(trojanURL + "error trojan url format")
+		return nil, errors.New("error trojan url format")
 	}
 
-	password := url[0]
-	addrAndPort := strings.Split(url[1], ":")
+	password := urls[0]
+	addrAndPort := strings.Split(urls[1], ":")
 	var addr string
 	var port int
 	if len(addrAndPort) == 1 {
@@ -87,10 +110,10 @@ func v2rayConfigFromTrojanURL(trojanURL string) (V2rayConfigMap, error) {
 		var err error
 		port, err = strconv.Atoi(addrAndPort[1])
 		if err != nil {
-			return nil, errors.New(trojanURL + "error trojan url format")
+			return nil, errors.New("error trojan url format")
 		}
 	} else {
-		return nil, errors.New(trojanURL + "error trojan url format")
+		return nil, errors.New("error trojan url format")
 	}
 
 	return V2rayConfigMap{
@@ -124,7 +147,7 @@ func NewBase64TrojanFetcher(url string, index int) *Base64Fetcher {
 type Base64Fetcher struct {
 	url                string
 	index              int
-	v2rayConfigFromURL func(Url string) (V2rayConfigMap, error)
+	v2rayConfigFromURL func(url string) (V2rayConfigMap, error)
 }
 
 // Fetch 从网络上获取免费trojan节点信息

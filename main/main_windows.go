@@ -1,9 +1,12 @@
 package main
 
-func OSHookConfig(cfgJSON []byte) []byte {
-	return cfgJSON
-}
+import (
+	"github.com/xiqingping/freev2ray"
+)
 
 func main() {
-	serverLoop(startV2rayConfigRunner())
+	fetcher := CreateFetcherByCmdLine()
+	freev2ray.ServerLoop(freev2ray.StartV2rayConfigRunner(fetcher, defaultConfig), func (cfgJSON []byte) []byte {
+		return cfgJSON
+	})
 }

@@ -4,8 +4,10 @@ import (
 	"log"
 	"reflect"
 	"time"
+	"bytes"
 
 	"github.com/tidwall/sjson"
+	v2ray "github.com/v2fly/v2ray-core/v4"
 )
 
 // OutboundInfo 更新配置文件
@@ -59,4 +61,40 @@ func StartV2rayConfigRunner(fetcher OutboundInfoFetcher, defConfig string) <-cha
 	ch := make(chan []byte)
 	go v2rayConfigRunner(fetcher, defConfig, ch)
 	return ch
+}
+
+
+
+func ServerLoop(cfgJSONCh <-chan []byte, hook func (cfgJSON []byte) []byte) {
+	var server *v2ray.Instance
+	var cfgJSON []byte
+
+	for {
+		cfgJSON = <-cfgJSONCh
+		log.Println("ConfigJSON:")
+		log.Println(string(cfgJSON))
+
+		if cfg, err := v2ray.LoadConfig("json", "", bytes.NewReader(hook(cfgJSON))); err != nil {
+			log.Println("Failed to load config", err)
+		} else {
+			if server != nil {
+				if err = server.Close(); err != nil {
+					log.Println("Close v2ray error:", err)
+				} else {
+					log.Println("V2ray server closed")
+				}
+			}
+
+			if server, err = v2ray.New(cfg); err != nil {
+				log.Println("Failed to create server", err)
+			} else {
+				log.Println("Server created")
+				if err = server.Start(); err != nil {
+					log.Println("Failed to start", err)
+				} else {
+					log.Println("Server started")
+				}
+			}
+		}
+	}
 }

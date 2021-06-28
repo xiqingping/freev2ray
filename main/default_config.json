@@ -44,8 +44,32 @@
             },
             "protocol": "vmess",
             "settings": {
+                "vnext": [
+                    {
+                        "address": "api.ssfree.ru",
+                        "port": 443,
+                        "users": [
+                            {
+                                "alterId": 64,
+                                "id": "5050c1b8-d7c5-11eb-8df8-000017022008"
+                            }
+                        ]
+                    }
+                ]
             },
             "streamSettings": {
+                "security": "tls",
+                "wsSettings": {
+                    "connectionReuse": true,
+                    "path": "/getweather",
+                    "headers": {
+                        "Host": ""
+                    }
+                },
+                "network": "ws",
+                "tlsSettings": {
+                    "allowInsecure": true
+                }
             }
         },
         {
@@ -58,8 +82,7 @@
                     "mark": 255
                 }
             },
-            "settings": {
-            },
+            "settings": {},
             "tag": "direct"
         }
     ],
