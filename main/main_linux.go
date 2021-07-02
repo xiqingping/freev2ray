@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/thecodeteam/goodbye"
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
-    "github.com/xiqingping/freev2ray"
+	"github.com/xiqingping/freev2ray"
 )
 
 // IptablesConfig iptables配置
@@ -55,23 +57,28 @@ var iptabesConfigs = []IptablesConfig{
 	{Table: "nat", Chain: "OUTPUT", Policy: "-p tcp -m mark ! --mark 0xff -j V2RAY"},
 }
 
-
 func main() {
 	ctx := context.Background()
 	defer goodbye.Exit(ctx, -1)
 	goodbye.Notify(ctx)
-	initIptables(iptabesConfigs)
-	goodbye.Register(func(ctx context.Context, s os.Signal) {
-		deinitIptables(iptabesConfigs)
-	})
+
+	if os.Geteuid() == 0 {
+		defaultConfig, _ = sjson.Set(defaultConfig, "outbounds.0.streamSettings.sockopt.mark", 255)
+		initIptables(iptabesConfigs)
+		goodbye.Register(func(ctx context.Context, s os.Signal) {
+			deinitIptables(iptabesConfigs)
+		})
+	} else {
+		defaultConfig, _ = sjson.Delete(defaultConfig, "outbounds.1.streamSettings")
+		for idx, protocol := range gjson.Get(defaultConfig, "inbounds.#.protocol").Array() {
+			if protocol.String() == "dokodemo-door" {
+				defaultConfig, _ = sjson.Delete(defaultConfig, fmt.Sprintf("inbounds.%d", idx))
+				break
+			}
+		}
+
+	}
 
 	fetcher := CreateFetcherByCmdLine()
-
-	freev2ray.ServerLoop(freev2ray.StartV2rayConfigRunner(fetcher, defaultConfig), func (cfgJSON []byte) []byte {
-		if cfg, err := sjson.Set(string(cfgJSON), "outbounds.0.streamSettings.sockopt.mark", 255); err != nil {
-			return cfgJSON
-		} else {
-			return []byte(cfg)
-		}
-	})
+	freev2ray.ServerLoop(freev2ray.StartV2rayConfigRunner(fetcher, defaultConfig), nil)
 }

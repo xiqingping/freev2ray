@@ -1,10 +1,10 @@
 package freev2ray
 
 import (
+	"bytes"
 	"log"
 	"reflect"
 	"time"
-	"bytes"
 
 	"github.com/tidwall/sjson"
 	v2ray "github.com/v2fly/v2ray-core/v4"
@@ -63,18 +63,20 @@ func StartV2rayConfigRunner(fetcher OutboundInfoFetcher, defConfig string) <-cha
 	return ch
 }
 
-
-
-func ServerLoop(cfgJSONCh <-chan []byte, hook func (cfgJSON []byte) []byte) {
+func ServerLoop(cfgJSONCh <-chan []byte, hook func(cfgJSON []byte) []byte) {
 	var server *v2ray.Instance
 	var cfgJSON []byte
 
 	for {
 		cfgJSON = <-cfgJSONCh
+		if hook != nil {
+			cfgJSON = hook(cfgJSON)
+		}
+
 		log.Println("ConfigJSON:")
 		log.Println(string(cfgJSON))
 
-		if cfg, err := v2ray.LoadConfig("json", "", bytes.NewReader(hook(cfgJSON))); err != nil {
+		if cfg, err := v2ray.LoadConfig("json", "", bytes.NewReader(cfgJSON)); err != nil {
 			log.Println("Failed to load config", err)
 		} else {
 			if server != nil {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/guonaihong/clop"
 	"github.com/xiqingping/freev2ray"
-
 )
 
 //go:embed default_config.json
@@ -40,6 +39,7 @@ type CommandURLArg struct {
 type FetchArgs struct {
 	B64vmess      B64FetcherArgs          `clop:"subcommand=b64vmess" usage:"vmess outbound, use base64 fetcher"`
 	B64trojan     B64FetcherArgs          `clop:"subcommand=b64trojan" usage:"trojan outbound, use base64 fetcher"`
+	B64SS         B64FetcherArgs          `clop:"subcommand=b64ss" usage:"ss outbound, use base64 fetcher"`
 	ZKQ           ZKQFetcherArg           `clop:"subcommand=zkqtrojan" usage:"trojan outbound, use zkq fetcher"`
 	Freess        FreessFetcherArg        `clop:"subcommand=freessvmess" usage:"vmess outbound, use freess fetcher(https://free-ss.site)"`
 	SSFree        SSFreeFetcherArg        `clop:"subcommand=ssfreevmess" usage:"vmess outbound, use freess fetcher(https://view.ssfree.ru)"`
@@ -64,6 +64,8 @@ func CreateFetcherByCmdLine() freev2ray.OutboundInfoFetcher {
 		return freev2ray.NewBase64VmessFetcher(args.B64vmess.URL, args.B64vmess.Index)
 	} else if clop.IsSetSubcommand("b64trojan") {
 		return freev2ray.NewBase64TrojanFetcher(args.B64trojan.URL, args.B64trojan.Index)
+	} else if clop.IsSetSubcommand("b64ss") {
+		return freev2ray.NewBase64SSFetcher(args.B64SS.URL, args.B64SS.Index)
 	} else if clop.IsSetSubcommand("zkqtrojan") {
 		return freev2ray.ZKQTrojanFetcher{}
 	} else if clop.IsSetSubcommand("freessvmess") {

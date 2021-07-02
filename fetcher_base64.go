@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io/ioutil"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,12 +14,76 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+func base64Decode(b64s string) ([]byte, error) {
+	if ret, err := base64.URLEncoding.DecodeString(b64s); err == nil {
+		return ret, err
+	} else if ret, err := base64.RawURLEncoding.DecodeString(b64s); err == nil {
+		return ret, err
+	} else if ret, err := base64.StdEncoding.DecodeString(b64s); err == nil {
+		return ret, err
+	} else if ret, err := base64.RawStdEncoding.DecodeString(b64s); err == nil {
+		return ret, err
+	} else {
+		return nil, err
+	}
+}
+
+func v2rayConfigFromSSURL(url string) (V2rayConfigMap, error) {
+	if !strings.HasPrefix(url, "ss://") {
+		return nil, errors.New("not a ss url")
+	}
+	urls := strings.Split(strings.Split(url[5:], "#")[0], "@")
+	if len(urls) != 2 {
+		return nil, errors.New("error ss url format")
+	}
+
+	sMethodAndPassword, err := base64Decode(urls[0])
+	if err != nil {
+		return nil, errors.New("decode method and password error")
+	}
+
+	methodAndPassword := strings.Split(string(sMethodAndPassword), ":")
+	if len(methodAndPassword) != 2 {
+		return nil, errors.New("error method and password format")
+	}
+
+	addrAndPort := strings.Split(urls[1], ":")
+	var addr string
+	var port int
+	if len(addrAndPort) == 1 {
+		addr = addrAndPort[0]
+		port = 443
+	} else if len(addrAndPort) == 2 {
+		addr = addrAndPort[0]
+		var err error
+		port, err = strconv.Atoi(addrAndPort[1])
+		if err != nil {
+			return nil, errors.New("error trojan port format")
+		}
+	} else {
+		return nil, errors.New("error trojan addr and port format")
+	}
+
+	return V2rayConfigMap{
+		"outbounds.0.protocol":                    "shadowsocks",
+		"outbounds.0.settings.servers.0.email":    "love@v2ray.com",
+		"outbounds.0.settings.servers.0.address":  addr,
+		"outbounds.0.settings.servers.0.port":     port,
+		"outbounds.0.settings.servers.0.method":   methodAndPassword[0],
+		"outbounds.0.settings.servers.0.password": methodAndPassword[1],
+		"outbounds.0.settings.servers.0.level":    0,
+		"outbounds.0.settings.servers.0.ota":      false,
+		"outbounds.0.streamSettings.security":     "none",
+		"outbounds.0.streamSettings.network":      "tcp",
+	}, nil
+}
+
 func v2rayConfigFromVmessURL(url string) (V2rayConfigMap, error) {
 	if !strings.HasPrefix(url, "vmess://") {
 		return nil, errors.New("not vmess url")
 	}
 
-	vmessJSONBytes, err := base64.URLEncoding.DecodeString(url[8:])
+	vmessJSONBytes, err := base64Decode(url[8:])
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +157,7 @@ func v2rayConfigFromTrojanURL(url string) (V2rayConfigMap, error) {
 	}
 
 	urls := strings.Split(strings.Split(url[9:], "#")[0], "@")
-	if len(url) != 2 {
+	if len(urls) != 2 {
 		return nil, errors.New("error trojan url format")
 	}
 
@@ -110,10 +173,10 @@ func v2rayConfigFromTrojanURL(url string) (V2rayConfigMap, error) {
 		var err error
 		port, err = strconv.Atoi(addrAndPort[1])
 		if err != nil {
-			return nil, errors.New("error trojan url format")
+			return nil, errors.New("error trojan port format")
 		}
 	} else {
-		return nil, errors.New("error trojan url format")
+		return nil, errors.New("error trojan addr and port format")
 	}
 
 	return V2rayConfigMap{
@@ -144,6 +207,14 @@ func NewBase64TrojanFetcher(url string, index int) *Base64Fetcher {
 	}
 }
 
+func NewBase64SSFetcher(url string, index int) *Base64Fetcher {
+	return &Base64Fetcher{
+		url:                url,
+		index:              index,
+		v2rayConfigFromURL: v2rayConfigFromSSURL,
+	}
+}
+
 type Base64Fetcher struct {
 	url                string
 	index              int
@@ -159,7 +230,6 @@ func (f *Base64Fetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 		f.url = "https://cdn.jsdelivr.net/gh/freefq/free@master/v2"
 	}
 
-	log.Println("Get url info from:", f.url)
 	rsp, err := http.Get(f.url)
 	if err != nil {
 		return nil, duration, err
@@ -171,7 +241,7 @@ func (f *Base64Fetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 		return nil, duration, err
 	}
 
-	dec1, err := base64.URLEncoding.DecodeString(string(body))
+	dec1, err := base64Decode(string(body))
 	if err != nil {
 		return nil, duration, err
 	}
@@ -179,15 +249,17 @@ func (f *Base64Fetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(dec1))
 	index := 0
 	for scanner.Scan() {
-		if info, err := f.v2rayConfigFromURL(scanner.Text()); err == nil {
+		txt := scanner.Text()
+		if info, err := f.v2rayConfigFromURL(txt); err == nil {
 			if index >= f.index {
 				return info, duration, nil
 			} else {
 				index++
 			}
+		} else {
+			// log.Println("v2ray config from url error:", err, "with URL:", txt)
 		}
 	}
 
-	log.Println("No valid url")
-	return nil, duration, nil
+	return nil, duration, errors.New("no valid url")
 }

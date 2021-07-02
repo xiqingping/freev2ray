@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"syscall"
 	"time"
 )
@@ -19,6 +20,10 @@ func NewHttpClient() http.Client {
 				}
 			})
 		},
+	}
+
+	if os.Geteuid() != 0 {
+		dialer.Control = nil
 	}
 
 	return http.Client{
