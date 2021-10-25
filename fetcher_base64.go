@@ -224,10 +224,10 @@ type Base64Fetcher struct {
 // Fetch 从网络上获取免费trojan节点信息
 func (f *Base64Fetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 	http := NewHttpClient()
-	duration := time.Minute * 5
+	duration := time.Minute
 
 	if f.url == "" {
-		f.url = "https://cdn.jsdelivr.net/gh/freefq/free@master/v2"
+		f.url = "https://raw.fastgit.org/freefq/free/master/v2"
 	}
 
 	rsp, err := http.Get(f.url)

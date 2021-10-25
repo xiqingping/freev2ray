@@ -43,20 +43,7 @@
                 "enabled": false
             },
             "protocol": "vmess",
-            "settings": {
-                "vnext": [
-                    {
-                        "address": "api.ssfree.ru",
-                        "port": 443,
-                        "users": [
-                            {
-                                "alterId": 64,
-                                "id": "5050c1b8-d7c5-11eb-8df8-000017022008"
-                            }
-                        ]
-                    }
-                ]
-            },
+            "settings": {},
             "streamSettings": {
                 "security": "tls",
                 "wsSettings": {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/coreos/go-iptables/iptables"
@@ -58,6 +59,9 @@ var iptabesConfigs = []IptablesConfig{
 }
 
 func main() {
+	f, _ := os.Executable()
+	os.Chdir(filepath.Dir(f))
+
 	ctx := context.Background()
 	defer goodbye.Exit(ctx, -1)
 	goodbye.Notify(ctx)
