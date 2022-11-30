@@ -1,4 +1,4 @@
-package freev2ray
+package fetcher
 
 import (
 	"errors"
@@ -8,17 +8,18 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/xiqingping/freev2ray"
 )
 
 // https://mickyssh.me/download
 
-//MickysshVmessFetcher 从freess获取Vmess节点
+// MickysshVmessFetcher 从freess获取Vmess节点
 type MickysshVmessFetcher struct {
 	Index int
 }
 
 // Fetch 从https://mickyssh.me/download获取免费V2ray节点信息
-func (f MickysshVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
+func (f MickysshVmessFetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error) {
 	http := NewHttpClient()
 	duration := time.Minute * 5
 

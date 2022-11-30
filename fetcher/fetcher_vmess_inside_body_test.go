@@ -1,13 +1,12 @@
-package freev2ray
+package fetcher
 
 import (
 	"encoding/json"
 	"testing"
 )
 
-func TestBase64VmessFetcher(t *testing.T) {
-	f := NewBase64VmessFetcher("", 0)
-
+func TestNewSSFreeVmessFetcher(t *testing.T) {
+	f := NewSSFreeVmessFetcher()
 	cfg, d, err := f.Fetch()
 	if err != nil {
 		t.Fatal(err)
@@ -19,9 +18,8 @@ func TestBase64VmessFetcher(t *testing.T) {
 	t.Log("config:", string(config))
 }
 
-func TestBase64TrojanFetcher(t *testing.T) {
-	f := NewBase64TrojanFetcher("", 0)
-
+func TestNewFreev2rayVmessFetcher(t *testing.T) {
+	f := NewFreev2rayVmessFetcher()
 	cfg, d, err := f.Fetch()
 	if err != nil {
 		t.Fatal(err)

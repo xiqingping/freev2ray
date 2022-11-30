@@ -1,12 +1,12 @@
-package freev2ray
+package fetcher
 
 import (
-	"encoding/base64"
 	"io/ioutil"
 	"log"
 	"time"
 
 	"github.com/tidwall/gjson"
+	"github.com/xiqingping/freev2ray"
 )
 
 // https://free.v2x-nav.ml/
@@ -14,7 +14,7 @@ import (
 type V2xrayVmessFetcher struct{}
 
 // Fetch 从网络上获取免费V2ray节点信息
-func (V2xrayVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
+func (V2xrayVmessFetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error) {
 	httpClient := NewHttpClient()
 
 	h, m, s := time.Now().Clock()
@@ -30,13 +30,13 @@ func (V2xrayVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 		return nil, duration, err
 	}
 
-	dec1, err := base64.RawStdEncoding.DecodeString(string(body))
+	dec1, err := base64Decode(string(body))
 	if err != nil {
 		log.Println("base64 decode1:", string(body), "with error", err)
 		return nil, duration, err
 	}
 
-	dec2, err := base64.URLEncoding.DecodeString(string(dec1))
+	dec2, err := base64Decode(string(dec1))
 	if err != nil {
 		log.Println("base64 decode2:", string(body), "with error", err)
 		return nil, duration, err

@@ -9,5 +9,5 @@ require (
 	github.com/thecodeteam/goodbye v0.0.0-20170927022442-a83968bda2d3
 	github.com/tidwall/gjson v1.8.0
 	github.com/tidwall/sjson v1.1.7
-	github.com/v2fly/v2ray-core/v4 v4.40.0
+	github.com/v2fly/v2ray-core/v5 v5.1.0
 )

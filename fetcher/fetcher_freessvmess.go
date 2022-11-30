@@ -1,4 +1,4 @@
-package freev2ray
+package fetcher
 
 import (
 	"io/ioutil"
@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/tidwall/gjson"
+	"github.com/xiqingping/freev2ray"
 )
 
 // 使用国外邮箱发送邮件到 ss@rohankdd.com 可自动获取镜像站。
 
-//FreessVmessFetcher 从freess获取Vmess节点
+// FreessVmessFetcher 从freess获取Vmess节点
 type FreessVmessFetcher struct {
 	MirrorURL string
 }
@@ -18,7 +19,7 @@ type FreessVmessFetcher struct {
 //https://free-ss.pw/v/443.json
 
 // Fetch 从网络上获取免费V2ray节点信息
-func (f FreessVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
+func (f FreessVmessFetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error) {
 	http := NewHttpClient()
 	duration := time.Minute * 5
 
@@ -40,7 +41,7 @@ func (f FreessVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 		return nil, duration, err
 	}
 
-	configMap := V2rayConfigMap{
+	configMap := freev2ray.V2rayConfigMap{
 		"outbounds.0.protocol": "vmess",
 	}
 	k := "outbounds.0.settings.vnext.0.address"

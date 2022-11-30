@@ -1,17 +1,14 @@
-package freev2ray
+package fetcher
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/base64"
 	"errors"
-	"io/ioutil"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tidwall/gjson"
+	"github.com/xiqingping/freev2ray"
 )
 
 func base64Decode(b64s string) ([]byte, error) {
@@ -28,7 +25,12 @@ func base64Decode(b64s string) ([]byte, error) {
 	}
 }
 
-func v2rayConfigFromSSURL(url string) (V2rayConfigMap, error) {
+// OutboundInfo 更新配置文件
+type OutboundInfo interface {
+	UpdateConfig(cfg string) (string, error)
+}
+
+func v2rayConfigFromSSURL(url string) (freev2ray.V2rayConfigMap, error) {
 	if !strings.HasPrefix(url, "ss://") {
 		return nil, errors.New("not a ss url")
 	}
@@ -64,7 +66,7 @@ func v2rayConfigFromSSURL(url string) (V2rayConfigMap, error) {
 		return nil, errors.New("error trojan addr and port format")
 	}
 
-	return V2rayConfigMap{
+	return freev2ray.V2rayConfigMap{
 		"outbounds.0.protocol":                    "shadowsocks",
 		"outbounds.0.settings.servers.0.email":    "love@v2ray.com",
 		"outbounds.0.settings.servers.0.address":  addr,
@@ -78,7 +80,7 @@ func v2rayConfigFromSSURL(url string) (V2rayConfigMap, error) {
 	}, nil
 }
 
-func v2rayConfigFromVmessURL(url string) (V2rayConfigMap, error) {
+func v2rayConfigFromVmessURL(url string) (freev2ray.V2rayConfigMap, error) {
 	if !strings.HasPrefix(url, "vmess://") {
 		return nil, errors.New("not vmess url")
 	}
@@ -96,7 +98,7 @@ func v2rayConfigFromVmessURL(url string) (V2rayConfigMap, error) {
 	} else {
 		return nil, errors.New("addr not ip or domain:" + addr)
 	}
-	configMap := V2rayConfigMap{
+	configMap := freev2ray.V2rayConfigMap{
 		"outbounds.0.protocol":                         "vmess",
 		"outbounds.0.settings.vnext.0.address":         gjson.Get(vmessJSON, "add").String(),
 		"outbounds.0.settings.vnext.0.port":            int(gjson.Get(vmessJSON, "port").Int()),
@@ -151,7 +153,7 @@ func v2rayConfigFromVmessURL(url string) (V2rayConfigMap, error) {
 	return configMap, nil
 }
 
-func v2rayConfigFromTrojanURL(url string) (V2rayConfigMap, error) {
+func v2rayConfigFromTrojanURL(url string) (freev2ray.V2rayConfigMap, error) {
 	if !strings.HasPrefix(url, "trojan://") {
 		return nil, errors.New("not trojan url")
 	}
@@ -179,7 +181,7 @@ func v2rayConfigFromTrojanURL(url string) (V2rayConfigMap, error) {
 		return nil, errors.New("error trojan addr and port format")
 	}
 
-	return V2rayConfigMap{
+	return freev2ray.V2rayConfigMap{
 		"outbounds.0.protocol":                                 "trojan",
 		"outbounds.0.settings.servers.0.address":               addr,
 		"outbounds.0.settings.servers.0.port":                  port,
@@ -189,77 +191,4 @@ func v2rayConfigFromTrojanURL(url string) (V2rayConfigMap, error) {
 		"outbounds.0.streamSettings.tlsSettings.allowInsecure": true,
 		"outbounds.0.streamSettings.tlsSettings.serverName":    addr,
 	}, nil
-}
-
-func NewBase64VmessFetcher(url string, index int) *Base64Fetcher {
-	return &Base64Fetcher{
-		url:                url,
-		index:              index,
-		v2rayConfigFromURL: v2rayConfigFromVmessURL,
-	}
-}
-
-func NewBase64TrojanFetcher(url string, index int) *Base64Fetcher {
-	return &Base64Fetcher{
-		url:                url,
-		index:              index,
-		v2rayConfigFromURL: v2rayConfigFromTrojanURL,
-	}
-}
-
-func NewBase64SSFetcher(url string, index int) *Base64Fetcher {
-	return &Base64Fetcher{
-		url:                url,
-		index:              index,
-		v2rayConfigFromURL: v2rayConfigFromSSURL,
-	}
-}
-
-type Base64Fetcher struct {
-	url                string
-	index              int
-	v2rayConfigFromURL func(url string) (V2rayConfigMap, error)
-}
-
-// Fetch 从网络上获取免费trojan节点信息
-func (f *Base64Fetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
-	http := NewHttpClient()
-	duration := time.Minute
-
-	if f.url == "" {
-		f.url = "https://raw.fastgit.org/freefq/free/master/v2"
-	}
-
-	rsp, err := http.Get(f.url)
-	if err != nil {
-		return nil, duration, err
-	}
-
-	body, err := ioutil.ReadAll(rsp.Body)
-	rsp.Body.Close()
-	if err != nil {
-		return nil, duration, err
-	}
-
-	dec1, err := base64Decode(string(body))
-	if err != nil {
-		return nil, duration, err
-	}
-
-	scanner := bufio.NewScanner(bytes.NewReader(dec1))
-	index := 0
-	for scanner.Scan() {
-		txt := scanner.Text()
-		if info, err := f.v2rayConfigFromURL(txt); err == nil {
-			if index >= f.index {
-				return info, duration, nil
-			} else {
-				index++
-			}
-		} else {
-			// log.Println("v2ray config from url error:", err, "with URL:", txt)
-		}
-	}
-
-	return nil, duration, errors.New("no valid url")
 }

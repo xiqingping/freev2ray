@@ -1,4 +1,4 @@
-package freev2ray
+package fetcher
 
 import (
 	"encoding/json"

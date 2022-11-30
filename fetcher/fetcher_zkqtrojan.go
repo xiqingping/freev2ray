@@ -1,4 +1,4 @@
-package freev2ray
+package fetcher
 
 import (
 	"errors"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/xiqingping/freev2ray"
 )
 
 // Documents
@@ -19,7 +20,7 @@ import (
 type ZKQTrojanFetcher struct {
 }
 
-func (f ZKQTrojanFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
+func (f ZKQTrojanFetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error) {
 	http := NewHttpClient()
 
 	duration := time.Minute * 2
@@ -65,7 +66,7 @@ func (f ZKQTrojanFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 	h, m, s := time.Now().Clock()
 	duration = (time.Duration(23-h)*3600 + time.Duration(59-m)*60 + time.Duration(70-s)) * time.Second
 
-	return V2rayConfigMap{
+	return freev2ray.V2rayConfigMap{
 		"outbounds.0.protocol":                                 "trojan",
 		"outbounds.0.settings.servers.0.address":               addr,
 		"outbounds.0.settings.servers.0.port":                  port,

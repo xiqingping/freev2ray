@@ -1,19 +1,13 @@
 package freev2ray
 
 import (
-	"bytes"
 	"log"
 	"reflect"
 	"time"
 
 	"github.com/tidwall/sjson"
-	v2ray "github.com/v2fly/v2ray-core/v4"
+	v2ray "github.com/v2fly/v2ray-core/v5"
 )
-
-// OutboundInfo 更新配置文件
-type OutboundInfo interface {
-	UpdateConfig(cfg string) (string, error)
-}
 
 // V2rayConfigMap V2ray config
 type V2rayConfigMap map[string]interface{}
@@ -76,7 +70,7 @@ func ServerLoop(cfgJSONCh <-chan []byte, hook func(cfgJSON []byte) []byte) {
 		log.Println("ConfigJSON:")
 		log.Println(string(cfgJSON))
 
-		if cfg, err := v2ray.LoadConfig("json", "", bytes.NewReader(cfgJSON)); err != nil {
+		if cfg, err := v2ray.LoadConfig("json", cfgJSON); err != nil {
 			log.Println("Failed to load config", err)
 		} else {
 			if server != nil {

@@ -1,4 +1,4 @@
-package freev2ray
+package fetcher
 
 import (
 	"errors"
@@ -6,16 +6,17 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/xiqingping/freev2ray"
 )
 
 // https://view.ssfree.ru/
 
-//SSFreeVmessFetcher 从freess获取Vmess节点
+// SSFreeVmessFetcher 从freess获取Vmess节点
 type SSFreeVmessFetcher struct {
 }
 
 // Fetch 从https://view.ssfree.ru获取免费V2ray节点信息
-func (f SSFreeVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
+func (f SSFreeVmessFetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error) {
 	http := NewHttpClient()
 	duration := time.Minute * 5
 
@@ -48,7 +49,7 @@ func (f SSFreeVmessFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
 		duration = (time.Duration(23-h)*3600 + time.Duration(59-m)*60 + time.Duration(70-s)) * time.Second
 
 		if duration > time.Second*3600*12 {
-			duration -= time.Second*3600*12
+			duration -= time.Second * 3600 * 12
 		}
 		return configMap, duration, nil
 	}

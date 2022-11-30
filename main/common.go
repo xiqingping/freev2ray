@@ -8,6 +8,7 @@ import (
 
 	"github.com/guonaihong/clop"
 	"github.com/xiqingping/freev2ray"
+	"github.com/xiqingping/freev2ray/fetcher"
 )
 
 //go:embed default_config.json
@@ -61,21 +62,21 @@ func CreateFetcherByCmdLine() freev2ray.OutboundInfoFetcher {
 	}
 
 	if clop.IsSetSubcommand("b64vmess") {
-		return freev2ray.NewBase64VmessFetcher(args.B64vmess.URL, args.B64vmess.Index)
+		return fetcher.NewBase64VmessFetcher(args.B64vmess.URL, args.B64vmess.Index)
 	} else if clop.IsSetSubcommand("b64trojan") {
-		return freev2ray.NewBase64TrojanFetcher(args.B64trojan.URL, args.B64trojan.Index)
+		return fetcher.NewBase64TrojanFetcher(args.B64trojan.URL, args.B64trojan.Index)
 	} else if clop.IsSetSubcommand("b64ss") {
-		return freev2ray.NewBase64SSFetcher(args.B64SS.URL, args.B64SS.Index)
+		return fetcher.NewBase64SSFetcher(args.B64SS.URL, args.B64SS.Index)
 	} else if clop.IsSetSubcommand("zkqtrojan") {
-		return freev2ray.ZKQTrojanFetcher{}
+		return fetcher.ZKQTrojanFetcher{}
 	} else if clop.IsSetSubcommand("freessvmess") {
-		return freev2ray.FreessVmessFetcher{MirrorURL: args.Freess.URL}
+		return fetcher.FreessVmessFetcher{MirrorURL: args.Freess.URL}
 	} else if clop.IsSetSubcommand("ssfreevmess") {
-		return freev2ray.SSFreeVmessFetcher{}
+		return fetcher.SSFreeVmessFetcher{}
 	} else if clop.IsSetSubcommand("mickysshvmess") {
-		return freev2ray.MickysshVmessFetcher{Index: args.Mickyssh.Index}
+		return fetcher.MickysshVmessFetcher{Index: args.Mickyssh.Index}
 	} else if clop.IsSetSubcommand("cmdurl") {
-		return freev2ray.StringURLFetcher{URL: args.CmdURL.URL}
+		return fetcher.StringURLFetcher{URL: args.CmdURL.URL}
 	} else {
 		clop.Usage()
 		os.Exit(1)

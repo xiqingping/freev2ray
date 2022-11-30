@@ -1,4 +1,4 @@
-package freev2ray
+package fetcher
 
 import (
 	"errors"
@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/xiqingping/freev2ray"
 )
 
 // #intro > div > div > footer > ul:nth-child(1) > li:nth-child(2) > button
 
-//VmessInsideBodyFetcher 从某个网址的Body中获取Vmess节点
+// VmessInsideBodyFetcher 从某个网址的Body中获取Vmess节点
 type VmessInsideBodyFetcher struct {
 	URL       string
 	ParseArg  interface{}
@@ -18,7 +19,7 @@ type VmessInsideBodyFetcher struct {
 }
 
 // Fetch 从网址的Body中获取Vmess节点
-func (f VmessInsideBodyFetcher) Fetch() (V2rayConfigMap, time.Duration, error) {
+func (f VmessInsideBodyFetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error) {
 	http := NewHttpClient()
 	duration := time.Minute * 5
 

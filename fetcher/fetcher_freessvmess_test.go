@@ -1,12 +1,12 @@
-package freev2ray
+package fetcher
 
 import (
 	"encoding/json"
 	"testing"
 )
 
-func TestZKQTrojanFetcher(t *testing.T) {
-	f := ZKQTrojanFetcher{}
+func TestFreessVmessFetcher(t *testing.T) {
+	f := FreessVmessFetcher{}
 
 	cfg, d, err := f.Fetch()
 	if err != nil {
