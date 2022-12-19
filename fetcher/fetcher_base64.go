@@ -10,11 +10,19 @@ import (
 	"github.com/xiqingping/freev2ray"
 )
 
+func NewBase64CommonFetcher(url string, index int) *Base64Fetcher {
+	return &Base64Fetcher{
+		url:                url,
+		index:              index,
+		fromURL: v2rayConfigFromURL,
+	}
+}
+
 func NewBase64VmessFetcher(url string, index int) *Base64Fetcher {
 	return &Base64Fetcher{
 		url:                url,
 		index:              index,
-		v2rayConfigFromURL: v2rayConfigFromVmessURL,
+		fromURL: v2rayConfigFromVmessURL,
 	}
 }
 
@@ -22,7 +30,7 @@ func NewBase64TrojanFetcher(url string, index int) *Base64Fetcher {
 	return &Base64Fetcher{
 		url:                url,
 		index:              index,
-		v2rayConfigFromURL: v2rayConfigFromTrojanURL,
+		fromURL: v2rayConfigFromTrojanURL,
 	}
 }
 
@@ -30,14 +38,14 @@ func NewBase64SSFetcher(url string, index int) *Base64Fetcher {
 	return &Base64Fetcher{
 		url:                url,
 		index:              index,
-		v2rayConfigFromURL: v2rayConfigFromSSURL,
+		fromURL: v2rayConfigFromSSURL,
 	}
 }
 
 type Base64Fetcher struct {
 	url                string
 	index              int
-	v2rayConfigFromURL func(url string) (freev2ray.V2rayConfigMap, error)
+	fromURL func(url string) (freev2ray.V2rayConfigMap, error)
 }
 
 // Fetch 从网络上获取免费trojan节点信息
@@ -69,7 +77,7 @@ func (f *Base64Fetcher) Fetch() (freev2ray.V2rayConfigMap, time.Duration, error)
 	index := 0
 	for scanner.Scan() {
 		txt := scanner.Text()
-		if info, err := f.v2rayConfigFromURL(txt); err == nil {
+		if info, err := f.fromURL(txt); err == nil {
 			if index >= f.index {
 				return info, duration, nil
 			} else {

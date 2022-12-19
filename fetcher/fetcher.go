@@ -12,22 +12,21 @@ import (
 )
 
 func base64Decode(b64s string) ([]byte, error) {
-	if ret, err := base64.URLEncoding.DecodeString(b64s); err == nil {
-		return ret, err
-	} else if ret, err := base64.RawURLEncoding.DecodeString(b64s); err == nil {
-		return ret, err
-	} else if ret, err := base64.StdEncoding.DecodeString(b64s); err == nil {
-		return ret, err
-	} else if ret, err := base64.RawStdEncoding.DecodeString(b64s); err == nil {
-		return ret, err
-	} else {
-		return nil, err
+	decodes := []func(string) ([]byte, error){
+		base64.URLEncoding.DecodeString,
+		base64.RawURLEncoding.DecodeString,
+		base64.StdEncoding.DecodeString,
+		base64.RawStdEncoding.DecodeString,
 	}
-}
 
-// OutboundInfo 更新配置文件
-type OutboundInfo interface {
-	UpdateConfig(cfg string) (string, error)
+	for _, decode := range decodes {
+		if ret, err := decode(b64s); err == nil {
+			return ret, err
+		}
+
+	}
+	return nil, errors.New("Can not decode as base64")
+
 }
 
 func v2rayConfigFromSSURL(url string) (freev2ray.V2rayConfigMap, error) {
@@ -191,4 +190,19 @@ func v2rayConfigFromTrojanURL(url string) (freev2ray.V2rayConfigMap, error) {
 		"outbounds.0.streamSettings.tlsSettings.allowInsecure": true,
 		"outbounds.0.streamSettings.tlsSettings.serverName":    addr,
 	}, nil
+}
+
+func v2rayConfigFromURL(url string) (freev2ray.V2rayConfigMap, error) {
+	for _, v := range []func(string) (freev2ray.V2rayConfigMap, error){
+		v2rayConfigFromSSURL,
+		v2rayConfigFromVmessURL,
+		v2rayConfigFromTrojanURL,
+	} {
+		if cfg, err := v(url); err == nil {
+			return cfg, err
+		}
+	}
+
+	return nil, errors.New("Can not decode url")
+
 }

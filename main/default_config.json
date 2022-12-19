@@ -40,7 +40,8 @@
     "outbounds": [
         {
             "mux": {
-                "enabled": false
+                "enabled": true,
+                "concurrency": 64
             },
             "protocol": "vmess",
             "settings": {},
@@ -76,6 +77,7 @@
     "routing": {
         "settings": {
             "domainStrategy": "IPIfNonMatch",
+            "domainMatcher": "mph",
             "rules": [
                 {
                     "domain": [

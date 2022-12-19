@@ -2,3 +2,5 @@ main/main
 go.sum
 *.exe
 main/freev2ray
+main/config_socket10.0.0.210_4008.json
+main/freev2ray.*

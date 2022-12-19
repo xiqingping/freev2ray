@@ -2,9 +2,9 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/guonaihong/clop"
 	"github.com/xiqingping/freev2ray"
@@ -38,6 +38,7 @@ type CommandURLArg struct {
 }
 
 type FetchArgs struct {
+	B64           B64FetcherArgs          `clop:"subcommand=b64" usage:"common base64 encoded outbound, use base64 fetcher"`
 	B64vmess      B64FetcherArgs          `clop:"subcommand=b64vmess" usage:"vmess outbound, use base64 fetcher"`
 	B64trojan     B64FetcherArgs          `clop:"subcommand=b64trojan" usage:"trojan outbound, use base64 fetcher"`
 	B64SS         B64FetcherArgs          `clop:"subcommand=b64ss" usage:"ss outbound, use base64 fetcher"`
@@ -51,6 +52,12 @@ type FetchArgs struct {
 
 func CreateFetcherByCmdLine() freev2ray.OutboundInfoFetcher {
 
+	fmt.Println(`
+Base64 encoded urls:
+https://raw.fastgit.org/freefq/free/master/v2
+https://raw.fastgit.org/xiyaowong/freeFQ/master/v2ray
+`)
+
 	args := &FetchArgs{}
 	clop.Bind(args)
 	if args.DefaultConfig != "" {
@@ -61,8 +68,10 @@ func CreateFetcherByCmdLine() freev2ray.OutboundInfoFetcher {
 		}
 	}
 
-	if clop.IsSetSubcommand("b64vmess") {
-		return fetcher.NewBase64VmessFetcher(args.B64vmess.URL, args.B64vmess.Index)
+	if clop.IsSetSubcommand("b64") {
+		return fetcher.NewBase64CommonFetcher(args.B64.URL, args.B64.Index)
+	} else if clop.IsSetSubcommand("b64vmess") {
+		return fetcher.NewBase64TrojanFetcher(args.B64vmess.URL, args.B64trojan.Index)
 	} else if clop.IsSetSubcommand("b64trojan") {
 		return fetcher.NewBase64TrojanFetcher(args.B64trojan.URL, args.B64trojan.Index)
 	} else if clop.IsSetSubcommand("b64ss") {
@@ -78,8 +87,8 @@ func CreateFetcherByCmdLine() freev2ray.OutboundInfoFetcher {
 	} else if clop.IsSetSubcommand("cmdurl") {
 		return fetcher.StringURLFetcher{URL: args.CmdURL.URL}
 	} else {
-		clop.Usage()
-		os.Exit(1)
+		// clop.Usage()
+		// os.Exit(1)
 		return nil
 	}
 }

@@ -32,6 +32,12 @@ func updateConfig(defConfig string, configMap V2rayConfigMap) (string, error) {
 // v2rayConfigRunner 从网络上获取免费V2ray节点，并生成V2ray配置文件
 func v2rayConfigRunner(fetcher OutboundInfoFetcher, defConfig string, ch chan<- []byte) {
 	var orgInfo V2rayConfigMap
+
+	if fetcher == nil {
+		ch <- []byte(defConfig)
+		return
+	}
+
 	for {
 		info, d, err := fetcher.Fetch()
 		if err == nil {
